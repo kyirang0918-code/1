@@ -1,27 +1,56 @@
 :root {
-    --bg-color: #Fdf3e7;
+    --bg-color: #Fdf3e7; /* 따뜻한 크림 파스텔톤 */
     --text-main: #333333;
     --text-muted: #555555;
-    --accent: #FF8552;
+    --accent: #FF8552; /* 발랄한 오렌지/다홍 */
     --accent-hover: #FF6B35;
     --card-bg: #FFFFFF;
-    --border-dark: #2F2F2F;
+    --border-dark: #2F2F2F; /* 완전 검정 대신 부드러운 다크그레이 */
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
     font-family: 'Galmuri9', 'Pretendard', sans-serif;
     min-height: 100vh;
+    /* 도트 느낌을 살리는 배경 패턴 */
     background-image: radial-gradient(#d5c5b5 2px, transparent 2px);
     background-size: 24px 24px;
 }
 
-.dashboard-container { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem; }
+.dashboard-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem;
+}
 
-header { text-align: center; margin-bottom: 4rem; animation: fadeInDown 0.8s ease-out; }
+header {
+    text-align: center;
+    margin-bottom: 4rem;
+    position: relative;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.food-icons {
+    margin: 1.5rem auto;
+    max-width: 900px;
+    width: 100%;
+}
+
+.pixel-food-img {
+    width: 100%;
+    max-width: 860px;
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.12));
+}
 
 .logo.sub-copy {
     display: inline-block;
@@ -35,6 +64,7 @@ header { text-align: center; margin-bottom: 4rem; animation: fadeInDown 0.8s eas
     box-shadow: 4px 4px 0px var(--border-dark);
     border-radius: 8px;
     transform: rotate(-2deg);
+    letter-spacing: -0.5px;
 }
 
 h1.main-title {
@@ -44,11 +74,21 @@ h1.main-title {
     color: var(--text-main);
     margin-bottom: 1rem;
     text-shadow: 4px 4px 0px #FFF, 6px 6px 0px var(--border-dark);
+    letter-spacing: 1px;
 }
 
-.food-icons { font-size: 2.5rem; margin-bottom: 1rem; display: flex; justify-content: center; gap: 1rem; }
+.food-icons {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
 
-.food-icon { display: inline-block; animation: floating 3s infinite ease-in-out; }
+.food-icon {
+    display: inline-block;
+    animation: floating 3s infinite ease-in-out;
+}
 .food-icon:nth-child(2) { animation-delay: 0.5s; }
 .food-icon:nth-child(3) { animation-delay: 1s; }
 
@@ -78,8 +118,13 @@ header p#summary-text {
     box-shadow: 3px 3px 0px var(--border-dark);
 }
 
-.trends-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 3rem 2.5rem; }
+.trends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 3rem 2.5rem;
+}
 
+/* Card - 레트로 팝업 스타일 */
 .trend-card {
     background: var(--card-bg);
     border: 4px solid var(--border-dark);
@@ -92,27 +137,49 @@ header p#summary-text {
     flex-direction: column;
     animation: fadeInUp 0.5s ease-out both;
 }
+
 .trend-card:nth-child(1) { transform: rotate(-1deg); }
 .trend-card:nth-child(2) { transform: rotate(1deg); }
 .trend-card:nth-child(3) { transform: rotate(-1deg); }
-.trend-card:hover { transform: translate(-4px, -4px) rotate(0deg) !important; box-shadow: 12px 12px 0px var(--border-dark); }
+
+.trend-card:hover {
+    transform: translate(-4px, -4px) rotate(0deg) !important;
+    box-shadow: 12px 12px 0px var(--border-dark);
+}
 
 .trend-number {
     position: absolute;
-    top: -25px; right: 20px;
-    font-size: 1.8rem;
+    top: -25px;
+    right: 20px;
+    font-size: 3.5rem;
     font-family: 'Galmuri9', sans-serif;
-    background: #FFDE59;
+    color: #FFDE59;
+    text-shadow: 3px 3px 0px var(--border-dark);
+    z-index: 10;
+    background: #FFF;
     border: 3px solid var(--border-dark);
     border-radius: 50%;
-    width: 60px; height: 60px;
-    display: flex; align-items: center; justify-content: center;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     box-shadow: 4px 4px 0px var(--border-dark);
 }
 
-.card-content { display: flex; flex-direction: column; flex: 1; margin-top: 1rem; }
+.card-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin-top: 1rem;
+}
 
-.trend-header { display: flex; align-items: center; margin-bottom: 1.2rem; flex-wrap: wrap; gap: 8px; }
+.trend-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-bottom: 1.2rem;
+}
 
 .sentiment {
     padding: 0.4rem 0.8rem;
@@ -123,12 +190,20 @@ header p#summary-text {
     border: 2px solid var(--border-dark);
     box-shadow: 2px 2px 0px var(--border-dark);
     background: #FFF;
+    color: var(--text-main);
 }
-.sentiment.hot { background: #FF9B9B; }
-.sentiment.growing { background: #A0DEFF; }
-.sentiment.new { background: #FFDE59; }
 
-.trend-title { font-size: 1.45rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.4; word-break: keep-all; }
+.sentiment.hot { background: #FF9B9B; }
+.sentiment.positive { background: #B3E2A7; }
+.sentiment.growing { background: #A0DEFF; }
+
+.trend-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+    word-break: keep-all;
+}
 
 .trend-desc {
     color: var(--text-muted);
@@ -144,7 +219,12 @@ header p#summary-text {
     border: 2px dashed #D1D1D1;
 }
 
-.keywords { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 2rem; }
+.keywords {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+}
 
 .keyword {
     background: #FFF9D2;
@@ -172,17 +252,25 @@ header p#summary-text {
     box-shadow: 4px 4px 0px var(--border-dark);
     transition: all 0.2s;
 }
-.source-btn:hover { background: var(--accent-hover); transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--border-dark); }
 
-@keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+.source-btn:hover {
+    background: var(--accent-hover);
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--border-dark);
+}
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 @keyframes floating {
     0% { transform: translateY(0px) rotate(0deg); }
     50% { transform: translateY(-10px) rotate(5deg); }
     100% { transform: translateY(0px) rotate(0deg); }
-}
-
-@media (max-width: 768px) {
-    h1.main-title { font-size: 2.5rem; }
-    .dashboard-container { padding: 2rem 1.5rem; }
 }
