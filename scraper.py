@@ -5,8 +5,9 @@ import urllib.request
 from datetime import datetime, timedelta, timezone
 from googleapiclient.discovery import build
 
-YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY")
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+# 보이지 않는 공백이나 엔터 기호가 딸려오는 것을 강제로 잘라내는 .strip() 백신 추가!
+YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "").strip()
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 
 time_limit = datetime.now(timezone.utc) - timedelta(days=3)
 three_days_ago = time_limit.strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -31,8 +32,6 @@ def summarize_with_ai(videos_data):
     with urllib.request.urlopen(req) as response:
         result = json.loads(response.read().decode('utf-8'))
         text = result['candidates'][0]['content']['parts'][0]['text']
-        
-        # AI가 가끔 마크다운 기호를 섞어 보내는 것을 강제로 뜯어냄
         text = text.strip()
         if text.startswith('```json'): text = text[7:]
         if text.startswith('```'): text = text[3:]
@@ -42,7 +41,7 @@ def summarize_with_ai(videos_data):
 if __name__ == "__main__":
     try:
         if not YOUTUBE_API_KEY or not GEMINI_API_KEY:
-            raise ValueError("API 키가 설정되지 않았습니다.")
+            raise ValueError("API 키가 아예 비어있습니다!")
 
         recent_videos = get_latest_youtube_trends("편의점 신상 OR 핫플 디저트 OR 디저트 먹방 OR 카페 오픈런 OR 디저트 유행")
         ai_json_result = summarize_with_ai(recent_videos)
@@ -54,7 +53,7 @@ if __name__ == "__main__":
 
     except Exception as e:
         error_msg = traceback.format_exc()
-        error_data = {"error": str(e), "traceback": error_msg[-500:]}
+        # 오류가 나더라도, 사용 중인 키의 앞 5자리를 반환해 진짜 제미나이 키인지 최종 검증합니다.
+        error_data = {"error": str(e), "traceback": error_msg[-500:], "key_check": GEMINI_API_KEY[:5]}
         with open("data.js", "w", encoding="utf-8") as f:
             f.write(f"const trendData = {json.dumps(error_data, ensure_ascii=False)};\n")
-        print("에러 발생! 로그를 data.js에 기록했습니다.")
