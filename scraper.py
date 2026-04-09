@@ -112,3 +112,59 @@ def summarize_with_ai(videos_data, max_retries=3):
             else:
                 raise
 
+
+
+def enrich_with_naver_trends(trend_data):
+    """추출된 트렌드 키워드를 네이버 데이터랩으로 교차 검증하여 데이터를 보강합니다."""
+    if not NAVER_CLIENT_ID:
+        print("네이버 API 키가 없어 네이버 트렌드 교차 검증을 건너뜁니다.")
+        return trend_data
+
+    for trend in trend_data.get("trends", []):
+        main_keyword = trend.get("keywords", [trend.get("title", "")])[0]
+        naver_result = get_naver_trend(main_keyword)
+        if naver_result:
+            trend["naver_trend"] = naver_result
+            if naver_result["is_rising"] and trend.get("sentiment") == "growing":
+                trend["sentiment"] = "hot"  # 네이버에서도 상승 확인되면 hot으로 격상
+        print(f"  네이버 트렌드 조회 완료: {main_keyword}")
+    return trend_data
+
+
+if __name__ == "__main__":
+    try:
+        if not YOUTUBE_API_KEY:
+            raise ValueError("YOUTUBE_API_KEY 시크릿이 설정되지 않았습니다!")
+        if not GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY 시크릿이 설정되지 않았습니다!")
+
+        print("1. 유튜브 최신 트렌드 수집 중...")
+        recent_videos = get_latest_youtube_trends(
+            "편의점 신상 OR 핫플 디저트 OR 먹방 신메뉴 OR 카페 신메뉴 OR 마라탕 OR 탕후루 OR 떡볶이 신메뉴"
+        )
+        print(f"   → 영상 {len(recent_videos)}개 수집 완료.")
+
+        print("2. Gemini AI로 구체적 트렌드 키워드 분석 중...")
+        ai_json_str = summarize_with_ai(recent_videos)
+        trend_data = json.loads(ai_json_str)
+        print(f"   → AI 분석 완료. 트렌드 {len(trend_data.get('trends', []))}개 추출.")
+
+        print("3. 네이버 데이터랩으로 교차 검증 중...")
+        trend_data = enrich_with_naver_trends(trend_data)
+
+        with open("data.js", "w", encoding="utf-8") as f:
+            f.write(f"const trendData = {json.dumps(trend_data, ensure_ascii=False)};\n")
+
+        print("✅ 모든 작업 완료! data.js 업데이트 성공.")
+
+    except Exception as e:
+        error_msg = traceback.format_exc()
+        error_data = {
+            "error": str(e),
+            "traceback": error_msg[-600:],
+            "key_check": GEMINI_API_KEY[:5] if GEMINI_API_KEY else "없음"
+        }
+        with open("data.js", "w", encoding="utf-8") as f:
+            f.write(f"const trendData = {json.dumps(error_data, ensure_ascii=False)};\n")
+        print(f"❌ 에러 발생: {e}")
+        raise  # 에러를 다시 던져 Actions에서 실패로 표시되도록 함
