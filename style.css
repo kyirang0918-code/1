@@ -24,6 +24,15 @@ body {
     background-size: 24px 24px;
 }
 
+.pixel-food-img {
+    width: 100%;
+    max-width: 460px;
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.12));
+}
+
 .dashboard-container {
     max-width: 1100px;
     margin: 0 auto;
@@ -43,14 +52,6 @@ header {
     width: 100%;
 }
 
-.pixel-food-img {
-    width: 100%;
-    max-width: 460px;
-    height: auto;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.12));
-}
 
 .logo.sub-copy {
     display: inline-block;
@@ -273,4 +274,13 @@ header p#summary-text {
     0% { transform: translateY(0px) rotate(0deg); }
     50% { transform: translateY(-10px) rotate(5deg); }
     100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.pixel-food-img2 {
+    width: 100%;
+    max-width: 460px;
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    filter: drop-shadow(4px 4px 0px rgba(0,0,0,0.12));
 }
