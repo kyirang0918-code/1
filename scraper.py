@@ -135,7 +135,7 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=2):
 - 반드시 실제 상품명, 메뉴명, 브랜드명으로 작성
 - "디저트 유행" 같은 모호한 표현 금지
 - sentiment는 "hot" / "growing" / "new" 중 하나
-- keywords는 실제 검색어 3~5개
+- keywords는 실제 검색어 3~6개
 - mentioned_in은 아이템이 언급된 출처를 "youtube", "naver_blog", "community" 중에서 모두 표기
 - source_video는 참고한 URL 중 하나
 
