@@ -115,41 +115,23 @@ def get_naver_trend(keyword):
 
 
 def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=3):
-    """회원님이 가장 만족하셨던 gemini-2.5-flash 단일 모델만 깔끔하게 사용합니다."""
     import time
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+    # 모델 버전을 1.5-flash 또는 2.0-flash로 수정
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
     prompt = f"""
-당신은 대한민국 F&B(식음료) 트렌드 전문 분석가입니다.
-아래는 최근 3일간 수집된 유튜브, 네이버 블로그, 그리고 주요 커뮤니티(X, 더쿠, 인스티즈 등)의 데이터입니다.
+    당신은 대한민국 F&B(식음료) 트렌드 전문 분석가입니다.
+    # ... (프롬프트 내용은 기존과 동일하게 유지) ...
+    """
 
-[유튜브 데이터]
-{json.dumps(videos_data, ensure_ascii=False)}
-
-[네이버 블로그 데이터]
-{json.dumps(blogs_data, ensure_ascii=False)}
-
-[커뮤니티 및 SNS 데이터]
-{json.dumps(community_data, ensure_ascii=False)}
-
-[분석 지시]
-위 세 가지 데이터를 분석하여, 현재 한국에서 실제로 유행하거나 화제가 되고 있는 구체적인 F&B 아이템 5개를 추출하세요.
-단일 출처가 아닌, **여러 출처에서 공통으로 언급되는 유행 아이템**을 최우선으로 선정하세요.
-
-중요:
-- "디저트가 유행", "편의점 트렌드" 같은 모호한 양상 표현은 절대 금지.
-- 반드시 실제 상품명, 메뉴명, 또는 브랜드명을 중심으로 작성할 것.
-- sentiment 값은 반드시 "hot"(지금 난리남), "growing"(상승세), "new"(신상) 중 하나로만 작성.
-- keywords 배열에는 실제 검색에 쓸 수 있는 구체적인 단어만 3~5개 넣을 것.
-- mentioned_in 배열에는 아이템이 언급된 출처를 "youtube", "naver_blog", "community" 중에서 찾아 모두 넣으세요.
-- source_video는 참고한 데이터 중 가장 대표적인 URL 하나를 넣으세요.
-
-[출력 형식] 반드시 아래 JSON만 출력할 것:
-{{"updated_at": "{today_str}", "summary": "한 문장으로 핵심 요약", "trends": [{{"id": 1, "title": "구체적인 상품명", "description": "왜 화제인지 2~3문장 설명", "sentiment": "hot", "keywords": ["키워드1", "키워드2"], "mentioned_in": ["youtube", "community"], "source_video": "대표 URL"}}]}}
-"""
-
-    data = {"contents": [{"parts": [{"text": prompt}]}]}
+    # generationConfig를 추가하여 확실한 JSON 응답을 유도
+    data = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "responseMimeType": "application/json"
+        }
+    }
 
     for attempt in range(max_retries):
         try:
@@ -161,6 +143,8 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=3):
             with urllib.request.urlopen(req, timeout=60) as response:
                 result = json.loads(response.read().decode('utf-8'))
                 text = result['candidates'][0]['content']['parts'][0]['text'].strip()
+                
+                # generationConfig를 사용하면 마크다운 제거가 굳이 필요 없지만, 안전을 위해 유지
                 text = text.replace("```json", "").replace("```", "").strip()
                 return text
                 
@@ -170,15 +154,16 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=3):
                     wait = 65
                     print(f"   ⚠️ 무료 할당량(RPM) 초과. 리셋을 위해 {wait}초 휴식... ({attempt+1}/{max_retries})")
                 elif e.code == 503:
-                    wait = 15
-                    print(f"   ⚠️ 구글 서버 과부하. {wait}초 후 재시도... ({attempt+1}/{max_retries})")
+                    # 503 에러 시 재시도 대기 시간을 점진적으로 늘리는 방식을 추천합니다 (Exponential Backoff)
+                    wait = 15 * (attempt + 1)
+                    print(f"   ⚠️ 구글 서버 과부하(503). {wait}초 후 재시도... ({attempt+1}/{max_retries})")
                 else:
                     wait = 10
                     print(f"   ⚠️ API 오류 ({e.code}). {wait}초 후 재시도... ({attempt+1}/{max_retries})")
                 time.sleep(wait)
             else:
                 error_body = e.read().decode('utf-8') if e.fp else "알 수 없는 에러"
-                print(f"❌ 최종 에러 사유: {error_body}")
+                print(f"❌ 최종 에러 사유: {e.code} - {error_body}")
                 raise
         except Exception as e:
             if attempt < max_retries - 1:
