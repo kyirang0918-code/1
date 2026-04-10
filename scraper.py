@@ -114,16 +114,16 @@ def get_naver_trend(keyword):
 
 
 def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
-    """Gemini AI로 데이터를 분석합니다. 2.5-flash 모델 실패 시 1.5-flash로 자동 폴백(Fallback)합니다."""
+    """Gemini AI로 데이터를 분석합니다. 확실하게 동작하는 모델명들로 순차적 폴백(Fallback)합니다."""
     import time
     
-    # 모델 전환을 위한 배열 (처음 3번은 2.5-flash 시도, 실패하면 1.5-flash로 우회)
+    # 503, 404 에러 방지를 위해 구글 API가 보장하는 확실한 모델명들만 배치
     models_to_try = [
-        "gemini-2.5-flash",
-        "gemini-2.5-flash", 
-        "gemini-2.5-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash"
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash", 
+        "gemini-1.5-pro-latest",
+        "gemini-pro",
+        "gemini-1.5-flash-8b"
     ]
 
     prompt = f"""
@@ -177,8 +177,8 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
                 
         except Exception as e:
             if attempt < max_retries - 1:
-                wait = (attempt + 1) * 10
-                print(f"   ⚠️ Gemini API 서버 지연 ({e}). [{current_model}] 시도 실패. {wait}초 후 재시도... ({attempt+1}/{max_retries})")
+                wait = (attempt + 1) * 5
+                print(f"   ⚠️ Gemini API 응답 지연 ({e}). [{current_model}] 시도 실패. {wait}초 후 다음 모델로 우회 시도... ({attempt+1}/{max_retries})")
                 time.sleep(wait)
             else:
                 raise
