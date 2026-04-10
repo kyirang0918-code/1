@@ -26,7 +26,7 @@ body {
 
 .pixel-food-img {
     width: 100%;
-    max-width: 460px;
+    max-width: 2500px;
     height: auto;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
@@ -278,7 +278,7 @@ header p#summary-text {
 
 .pixel-food-img2 {
     width: 100%;
-    max-width: 460px;
+    max-width: 2500px;
     height: auto;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
