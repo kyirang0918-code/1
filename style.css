@@ -137,7 +137,7 @@ header p#summary-text {
     font-family: 'Galmuri9', sans-serif;
     color: #FFF;
     background: var(--border-dark);
-    padding: 0.4rem 1.6rem; /* 좌우 여백을 충분히 늘려 글자 잘림 방지 */
+    padding: 0.6rem 1.8rem; /* 좌우 여백을 충분히 늘려 글자 잘림 방지 */
     border-radius: 8px; /* 더 둥글게 */
     z-index: 10;
     display: flex;
