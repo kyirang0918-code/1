@@ -7,7 +7,7 @@ import urllib.error
 from datetime import datetime, timedelta, timezone
 from googleapiclient.discovery import build
 
-# 1. 환경 변수 로드 (GOOGLE_CX 및 GOOGLE_API_KEY 추가)
+# 1. 환경 변수 로드
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "").strip()
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "").strip()
 NAVER_CLIENT_ID = os.environ.get("NAVER_CLIENT_ID", "").strip()
@@ -115,16 +115,15 @@ def get_naver_trend(keyword):
 
 
 def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
-    """Gemini AI로 데이터를 분석합니다. 확실하게 동작하는 모델명들로 순차적 폴백(Fallback)합니다."""
+    """현재 서비스 중인 최신 Gemini AI 모델들로 데이터를 분석합니다."""
     import time
     
-    # 404 에러 방지를 위해, 구글 API가 보장하는 확실한 버전명(001, 002)까지 명시적으로 추가
+    # 404 에러의 주범인 구형(1.5, 1.0) 모델들을 삭제하고, 현재 구글이 서비스 중인 최신 모델들로만 리스트업!
     models_to_try = [
-        "gemini-1.5-flash",
-        "gemini-1.5-flash-001",
-        "gemini-1.5-flash-002",
-        "gemini-1.5-pro",
-        "gemini-1.0-pro"
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-2.5-pro",
+        "gemini-2.0-pro-exp"
     ]
 
     prompt = f"""
@@ -159,7 +158,10 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
     data = {"contents": [{"parts": [{"text": prompt}]}]}
 
     for attempt in range(max_retries):
-        current_model = models_to_try[attempt]
+        # 만약 시도 횟수가 모델 개수보다 많아지면, 마지막 모델을 계속 재시도
+        model_index = attempt if attempt < len(models_to_try) else -1
+        current_model = models_to_try[model_index]
+        
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent?key={GEMINI_API_KEY}"
         
         try:
@@ -172,27 +174,25 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
                 result = json.loads(response.read().decode('utf-8'))
                 text = result['candidates'][0]['content']['parts'][0]['text'].strip()
                 
-                # 마크다운 포맷 파싱 안전장치
                 text = text.replace("```json", "").replace("```", "").strip()
                 return text
                 
         except urllib.error.HTTPError as e:
-            # 404, 403 등 HTTP 에러 시 구글 서버가 뱉어내는 진짜 상세 사유를 읽어옵니다.
             error_body = e.read().decode('utf-8') if e.fp else "No error body"
             if attempt < max_retries - 1:
-                wait = (attempt + 1) * 5
-                print(f"   ⚠️ Gemini API 에러 ({e.code}). [{current_model}] 실패.")
+                # 503 에러 대응을 위해 대기 시간을 넉넉하게 설정
+                wait = (attempt + 1) * 10
+                print(f"   ⚠️ API 응답 지연/오류 ({e.code}). [{current_model}] 실패.")
                 print(f"      사유: {error_body.strip()}")
-                print(f"      → {wait}초 후 다음 모델로 우회 시도... ({attempt+1}/{max_retries})")
+                print(f"      → {wait}초 후 다음 최신 모델로 우회 시도... ({attempt+1}/{max_retries})")
                 time.sleep(wait)
             else:
                 print(f"❌ 최종 에러 사유: {error_body}")
                 raise
         except Exception as e:
-            # 그 외 네트워크 타임아웃 등의 에러
             if attempt < max_retries - 1:
-                wait = (attempt + 1) * 5
-                print(f"   ⚠️ Gemini API 응답 지연 ({e}). [{current_model}] 시도 실패. {wait}초 후 다음 모델로 우회 시도... ({attempt+1}/{max_retries})")
+                wait = (attempt + 1) * 10
+                print(f"   ⚠️ 네트워크 통신 지연 ({e}). [{current_model}] 시도 실패. {wait}초 후 재시도... ({attempt+1}/{max_retries})")
                 time.sleep(wait)
             else:
                 raise
@@ -207,7 +207,6 @@ def enrich_with_naver_trends(trend_data):
     for trend in trend_data.get("trends", []):
         main_keyword = trend.get("keywords", [trend.get("title", "")])[0]
         
-        # 1. 출처 교차 검증 (mentioned_in 배열 확인)
         sources = trend.get("mentioned_in", [])
         if len(sources) >= 2:
             print(f"   🔥 [교차 검증 성공] '{trend['title']}' - 여러 출처에서 언급됨: {', '.join(sources)}")
@@ -216,12 +215,11 @@ def enrich_with_naver_trends(trend_data):
             print(f"   ⚠️ [단일 출처 확인] '{trend['title']}' - {', '.join(sources)} 에서만 언급됨")
             trend["cross_verified"] = False
 
-        # 2. 네이버 데이터랩 교차 검증
         naver_result = get_naver_trend(main_keyword)
         if naver_result:
             trend["naver_trend"] = naver_result
             if naver_result["is_rising"] and trend.get("sentiment") == "growing":
-                trend["sentiment"] = "hot"  # 네이버에서도 상승 확인되면 hot으로 격상
+                trend["sentiment"] = "hot" 
         print(f"      ↳ 네이버 트렌드 조회 완료: {main_keyword}")
     return trend_data
 
