@@ -117,17 +117,13 @@ def get_naver_trend(keyword):
 def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=3):
     import time
 
-    # ✅ 모델 폴백 리스트: 앞에서부터 순서대로 시도
     MODEL_FALLBACKS = [
-        "gemini-2.5-flash-preview-04-17",   # 2.5 flash 최신 프리뷰
-        "gemini-2.0-flash",                  # 안정적인 2.0 flash
-        "gemini-1.5-flash",                  # 최후 보루
+        "gemini-2.5-flash-preview-04-17",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
     ]
 
-    prompt = f"""
-당신은 대한민국 F&B(식음료) 트렌드 전문 분석가입니다.
-... (기존 프롬프트 그대로)
-"""
+    prompt = f"""... (기존 프롬프트 그대로) ..."""
 
     data = {"contents": [{"parts": [{"text": prompt}]}]}
 
@@ -142,42 +138,31 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=3):
                     data=json.dumps(data).encode('utf-8'),
                     headers={'Content-Type': 'application/json'}
                 )
-                with urllib.request.urlopen(req, timeout=90) as response:
+                with urllib.request.urlopen(req, timeout=60) as response:  # timeout 원복
                     result = json.loads(response.read().decode('utf-8'))
                     text = result['candidates'][0]['content']['parts'][0]['text'].strip()
                     text = text.replace("```json", "").replace("```", "").strip()
-                    print(f"   ✅ 성공 모델: {model}")
+                    print(f"   ✅ 성공: {model}")
                     return text
 
             except urllib.error.HTTPError as e:
                 error_body = e.read().decode('utf-8') if e.fp else ""
-                print(f"   ⚠️ HTTP {e.code} ({model}, 시도 {attempt+1}/{max_retries}): {error_body[:200]}")
+                print(f"   ⚠️ HTTP {e.code} ({model}): {error_body[:200]}")
 
                 if e.code == 404:
-                    # 모델 자체가 없음 → 즉시 다음 모델로
-                    print(f"   ❌ 모델 '{model}' 없음. 다음 모델로 전환.")
-                    break  # inner loop 탈출 → 다음 모델
-
+                    break  # 즉시 다음 모델 (대기 없음)
                 elif e.code == 429:
-                    wait = 65 * (attempt + 1)  # 지수 증가
-                    print(f"   ⏳ 할당량 초과. {wait}초 대기...")
-                    time.sleep(wait)
-
+                    time.sleep(65)  # 할당량은 어쩔 수 없이 대기
                 elif e.code in (500, 503):
-                    wait = 15 * (2 ** attempt)  # 15 → 30 → 60초
-                    print(f"   ⏳ 서버 과부하. {wait}초 대기...")
-                    time.sleep(wait)
-
+                    time.sleep(10)  # ✅ 짧게 (기존 15초 → 10초)
                 else:
-                    wait = 10
-                    time.sleep(wait)
+                    time.sleep(5)
 
             except Exception as e:
-                wait = 10 * (attempt + 1)
-                print(f"   ⚠️ 네트워크 오류 ({e}). {wait}초 후 재시도...")
-                time.sleep(wait)
+                print(f"   ⚠️ 네트워크 오류: {e}")
+                time.sleep(5)  # ✅ 짧게
 
-    raise RuntimeError("모든 Gemini 모델 시도 실패. API 키 또는 네트워크를 확인하세요.")
+    raise RuntimeError("모든 Gemini 모델 시도 실패.")
 
 
 def enrich_with_naver_trends(trend_data):
