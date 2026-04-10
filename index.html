@@ -12,7 +12,8 @@
     <div class="dashboard-container">
         <header>
             <div class="food-icons">
-                <img src="pixel-food.png" alt="F&B 픽셀 일러스트" class="pixel-food-img"></div>
+                <img src="pixel-food.png" alt="F&B 픽셀 일러스트" class="pixel-food-img">
+            </div>
             <div class="logo sub-copy"> 최근 화제인 따끈 트렌드만 모았어요</div>
             
             <h1 class="main-title">오늘의 트렌드</h1>
@@ -23,15 +24,26 @@
         </header>
 
         <main id="trends-grid" class="trends-grid">
-            <!-- 자바스크립트를 통해 카드들이 여기에 렌더링됩니다 -->
-        </main>
+            </main>
     </div>
 
-  <script>
-        document.write('<script src="data.js?v=' + new Date().getTime() + '"><\/script>');
+    <script>
+        // 1. 캐시를 무시하고 최신 data.js를 먼저 불러옵니다.
+        var dataScript = document.createElement('script');
+        dataScript.src = 'data.js?v=' + new Date().getTime();
+        
+        // 2. data.js가 '완전히' 로드된 후에만 app.js를 실행하도록 순서를 꽉 잡아줍니다.
+        dataScript.onload = function() {
+            var appScript = document.createElement('script');
+            appScript.src = 'app.js?v=' + new Date().getTime();
+            document.body.appendChild(appScript);
+        };
+        
+        document.body.appendChild(dataScript);
     </script>
-    <script src="app.js"></script>
+    
     <div class="food-icons">
-        <img src="pixel-food2.png" alt="F&B 픽셀 일러스트" class="pixel-food-img2"></div>
+        <img src="pixel-food2.png" alt="F&B 픽셀 일러스트" class="pixel-food-img2">
+    </div>
 </body>
 </html>
