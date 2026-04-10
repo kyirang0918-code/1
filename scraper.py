@@ -52,7 +52,7 @@ def get_latest_youtube_trends(keywords, max_results=5):
         
         # 💡 핵심 검증 장치: 최소 반응도 필터링
         # 예: 조회수 1,000회 이상 OR 좋아요 50개 이상인 영상만 '진짜 화제'로 취급
-        if view_count >= 1000 or like_count >= 50:
+        if view_count >= 5000 or like_count >= 50:
             videos.append({
                 "title": item["snippet"]["title"],
                 "description": item["snippet"]["description"][:100],
@@ -297,19 +297,21 @@ if __name__ == "__main__":
             raise ValueError("GEMINI_API_KEY 시크릿이 설정되지 않았습니다!")
 
         print("1. 유튜브 최신 트렌드 수집 중...")
+        # 💡 수정: 누락된 OR 추가 및 키워드 최적화
         recent_videos = get_latest_youtube_trends(
-            "편의점 신상 OR 핫플 디저트 편의점 신상 OR 유행 솔직후기 OR 디저트 내돈내산 OR 유행 막차 OR 신상 디저트",
+            "편의점 신상 OR 신상 디저트 OR 디저트 유행 OR 유행 막차",
             max_results=7
         )
         print(f"   → 영상 {len(recent_videos)}개 수집 완료.")
 
         print("2. 네이버 블로그 수집 중...")
-        recent_blogs = get_naver_blog_trends("편의점 신상 OR 유행 솔직후기 OR 디저트 내돈내산 OR 유행 막차 OR 신상 디저트", max_results=7)
+        # 💡 수정: 네이버는 OR를 쓰면 안 됩니다. 가장 퀄리티가 좋은 키워드 조합으로 단순화!
+        recent_blogs = get_naver_blog_trends("편의점 신상 유행 디저트 내돈내산", max_results=7)
 
         print("3. 커뮤니티 수집 중...")
-        community_query = "(site:twitter.com OR site:x.com OR site:instiz.net OR site:theqoo.net) (편의점 신상 OR 요즘 유행 디저트 OR 품절 OR 유행이야 )"
+        # (커뮤니티는 구글 API를 쓰므로 기존 OR 구문 유지 가능)
+        community_query = "(site:twitter.com OR site:x.com OR site:instiz.net OR site:theqoo.net) (편의점 신상 OR 신상 디저트 OR 유행 막차 OR 품절)"
         recent_community = get_community_trends(community_query, max_results=7)
-        print(f"   → 블로그 {len(recent_blogs)}개, 커뮤니티 {len(recent_community)}개 수집 완료.")
 
         print("4. Gemini AI 트렌드 분석 중...")
         ai_json_str = summarize_with_ai(recent_videos, recent_blogs, recent_community)
