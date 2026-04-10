@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const card = document.createElement('div');
             card.className = `trend-card card-${index + 1}`;
+            
             card.innerHTML = `
                 <div class="trend-number">${index + 1}</div>
                 <div class="card-content">
@@ -48,8 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="trend-title">${trend.title}</h3>
                     <p class="trend-desc">${trend.description}</p>
                     <div class="keywords">${keywordsHTML}</div>
-                    // 이렇게 바꾸면 블로그에서 가져온 건 '네이버 블로그 확인하기'로 동적으로 바뀝니다!
-                     `<a href="${trend.source_link}" class="source-btn">${trend.source_name} 확인하기</a>`
+                    <a href="${trend.source_link}" class="source-btn" target="_blank">${trend.source_name} 확인하기</a>
                 </div>
             `;
             grid.appendChild(card);
