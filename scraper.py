@@ -73,7 +73,7 @@ def get_naver_blog_trends(keyword, max_results=7):
         return []
     
     encText = urllib.parse.quote(keyword)
-    # 💡 수정 1: sort=date(최신순)로 변경하고, 필터링을 위해 display=30으로 넉넉히 가져옵니다.
+    # 💡 최신순(date)으로 30개 넉넉히 가져옵니다.
     url = f"https://openapi.naver.com/v1/search/blog?query={encText}&display=30&sort=date"
     req = urllib.request.Request(url, headers={
         'X-Naver-Client-Id': NAVER_CLIENT_ID,
@@ -84,20 +84,32 @@ def get_naver_blog_trends(keyword, max_results=7):
         with urllib.request.urlopen(req) as response:
             result = json.loads(response.read().decode('utf-8'))
             
-            # 💡 수정 2: 3일 전 날짜를 YYYYMMDD 형식의 문자열로 생성
+            # 3일 전 날짜 세팅
             three_days_ago_date = (datetime.now() - timedelta(days=3)).strftime('%Y%m%d')
             
+            # 💡 걸러낼 스팸 키워드를 반복문 시작 전에 한 번만 선언합니다.
+            spam_keywords = ["소정의 원고료", "제공받아", "업체로부터", "협찬", "지원받아"]
             filtered_blogs = []
+            
+            # 💡 반복문은 깔끔하게 딱 한 번만 돕니다!
             for item in result.get('items', []):
-                # 💡 수정 3: postdate가 3일 전 날짜보다 크거나 같은(최신인) 글만 수집
+                
+                # 1단계: 3일 이내에 작성된 최신 글인가?
                 if item.get('postdate', '') >= three_days_ago_date:
+                    desc_text = item['description'].replace("<b>", "").replace("</b>", "")
+                    
+                    # 2단계: 본문 요약에 스팸 키워드가 하나라도 있는가?
+                    if any(spam in desc_text for spam in spam_keywords):
+                        continue # 스팸이면 이 아래 코드는 무시하고 다음 글로 넘어감
+                        
+                    # 3단계: 날짜도 최신이고 스팸도 아니면 찐 데이터로 추가!
                     filtered_blogs.append({
                         "title": item['title'].replace("<b>", "").replace("</b>", ""),
-                        "description": item['description'].replace("<b>", "").replace("</b>", "")[:100],
+                        "description": desc_text[:100],
                         "link": item['link']
                     })
                 
-                # 원하는 개수(max_results)를 채우면 루프 종료
+                # 4단계: 원하는 개수(max_results)를 채웠다면 미련 없이 루프 종료
                 if len(filtered_blogs) >= max_results:
                     break
                     
