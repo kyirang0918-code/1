@@ -22,8 +22,8 @@ today_str = datetime.now().strftime('%Y-%m-%d')
 one_month_ago_str = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
 
 
-def get_latest_youtube_trends(keywords, max_results=20):
-    """YouTube에서 최신 F&B 트렌드 영상을 가져옵니다."""
+def get_latest_youtube_trends(keywords, max_results=5):
+    """YouTube에서 최신 F&B 트렌드 영상을 가져옵니다. (데이터 다이어트: 5개)"""
     youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
     request = youtube.search().list(
         part="snippet", q=keywords, type="video",
@@ -34,15 +34,15 @@ def get_latest_youtube_trends(keywords, max_results=20):
     for item in response.get("items", []):
         videos.append({
             "title": item["snippet"]["title"],
-            "description": item["snippet"]["description"][:200],
+            "description": item["snippet"]["description"][:100], # 설명도 100자로 줄임
             "video_id": item["id"]["videoId"],
             "url": f"https://youtube.com/watch?v={item['id']['videoId']}"
         })
     return videos
 
 
-def get_naver_blog_trends(keyword, max_results=10):
-    """네이버 검색 API를 통해 블로그 '내돈내산/솔직후기' 반응을 수집합니다."""
+def get_naver_blog_trends(keyword, max_results=5):
+    """네이버 검색 API를 통해 블로그 반응을 수집합니다. (데이터 다이어트: 5개)"""
     if not NAVER_CLIENT_ID or not NAVER_CLIENT_SECRET:
         return []
     
@@ -59,7 +59,7 @@ def get_naver_blog_trends(keyword, max_results=10):
             result = json.loads(response.read().decode('utf-8'))
             return [{
                 "title": item['title'].replace("<b>", "").replace("</b>", ""),
-                "description": item['description'].replace("<b>", "").replace("</b>", ""),
+                "description": item['description'].replace("<b>", "").replace("</b>", "")[:100],
                 "link": item['link']
             } for item in result.get('items', [])]
     except Exception as e:
@@ -67,8 +67,8 @@ def get_naver_blog_trends(keyword, max_results=10):
         return []
 
 
-def get_community_trends(query, max_results=10):
-    """Google Custom Search API를 통해 X, 더쿠, 인스티즈를 우회 검색합니다."""
+def get_community_trends(query, max_results=5):
+    """Google Custom Search API를 통해 커뮤니티를 우회 검색합니다. (데이터 다이어트: 5개)"""
     if not GOOGLE_API_KEY or not GOOGLE_CX:
         return []
     
@@ -80,7 +80,7 @@ def get_community_trends(query, max_results=10):
         
         return [{
             "title": item.get('title', ''),
-            "snippet": item.get('snippet', ''),
+            "snippet": item.get('snippet', '')[:100],
             "link": item.get('link', '')
         } for item in res.get("items", [])]
     except Exception as e:
@@ -114,18 +114,11 @@ def get_naver_trend(keyword):
         return None
 
 
-def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
-    """회원님이 처음 성공하셨던 gemini-2.5-flash 모델을 기본으로 사용합니다."""
+def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=3):
+    """회원님이 가장 만족하셨던 gemini-2.5-flash 단일 모델만 깔끔하게 사용합니다."""
     import time
     
-    # 2.5-flash를 3번 시도하고, 만약의 사태를 위해 1.5-flash를 후순위로만 둡니다.
-    models_to_try = [
-        "gemini-2.5-flash",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-flash"
-    ]
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
     prompt = f"""
 당신은 대한민국 F&B(식음료) 트렌드 전문 분석가입니다.
@@ -134,10 +127,10 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
 [유튜브 데이터]
 {json.dumps(videos_data, ensure_ascii=False)}
 
-[네이버 블로그 데이터 (내돈내산/솔직후기 반응)]
+[네이버 블로그 데이터]
 {json.dumps(blogs_data, ensure_ascii=False)}
 
-[커뮤니티 및 SNS 데이터 (X, 인스티즈, 더쿠 실시간 반응)]
+[커뮤니티 및 SNS 데이터]
 {json.dumps(community_data, ensure_ascii=False)}
 
 [분석 지시]
@@ -159,9 +152,6 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
     data = {"contents": [{"parts": [{"text": prompt}]}]}
 
     for attempt in range(max_retries):
-        current_model = models_to_try[attempt]
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent?key={GEMINI_API_KEY}"
-        
         try:
             req = urllib.request.Request(
                 url,
@@ -171,22 +161,17 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
             with urllib.request.urlopen(req, timeout=60) as response:
                 result = json.loads(response.read().decode('utf-8'))
                 text = result['candidates'][0]['content']['parts'][0]['text'].strip()
-                
                 text = text.replace("```json", "").replace("```", "").strip()
                 return text
                 
         except urllib.error.HTTPError as e:
             if attempt < max_retries - 1:
-                # 에러 코드에 맞춘 스마트 쿨타임 대기
                 if e.code == 429:
                     wait = 65
-                    print(f"   ⚠️ 무료 할당량(RPM) 일시 초과. 쿨타임 리셋을 위해 {wait}초 휴식합니다... ({attempt+1}/{max_retries})")
+                    print(f"   ⚠️ 무료 할당량(RPM) 초과. 리셋을 위해 {wait}초 휴식... ({attempt+1}/{max_retries})")
                 elif e.code == 503:
                     wait = 15
-                    print(f"   ⚠️ 서버 일시 과부하. {wait}초 후 재시도... ({attempt+1}/{max_retries})")
-                elif e.code == 404:
-                    wait = 5
-                    print(f"   ⚠️ [{current_model}] 접근 불가. 다음 모델로 우회... ({attempt+1}/{max_retries})")
+                    print(f"   ⚠️ 구글 서버 과부하. {wait}초 후 재시도... ({attempt+1}/{max_retries})")
                 else:
                     wait = 10
                     print(f"   ⚠️ API 오류 ({e.code}). {wait}초 후 재시도... ({attempt+1}/{max_retries})")
@@ -198,7 +183,7 @@ def summarize_with_ai(videos_data, blogs_data, community_data, max_retries=5):
         except Exception as e:
             if attempt < max_retries - 1:
                 wait = 10
-                print(f"   ⚠️ 네트워크 통신 지연 ({e}). {wait}초 후 재시도... ({attempt+1}/{max_retries})")
+                print(f"   ⚠️ 네트워크 지연 ({e}). {wait}초 후 재시도... ({attempt+1}/{max_retries})")
                 time.sleep(wait)
             else:
                 raise
@@ -238,17 +223,19 @@ if __name__ == "__main__":
             raise ValueError("GEMINI_API_KEY 시크릿이 설정되지 않았습니다!")
 
         print("1. 유튜브 최신 트렌드 수집 중...")
+        # 수집량을 5개로 줄여서 AI의 부담을 덜어줍니다.
         recent_videos = get_latest_youtube_trends(
-            "편의점 신상 OR 핫플 디저트 OR 먹방 신메뉴 OR 카페 신메뉴 OR 마라탕 OR 탕후루 OR 떡볶이 신메뉴"
+            "편의점 신상 OR 핫플 디저트 OR 먹방 신메뉴 OR 카페 신메뉴 OR 마라탕 OR 탕후루 OR 떡볶이 신메뉴",
+            max_results=5
         )
         print(f"   → 영상 {len(recent_videos)}개 수집 완료.")
 
         print("2. 네이버 블로그 '찐 반응' 수집 중...")
-        recent_blogs = get_naver_blog_trends("편의점 신상 솔직후기 OR 디저트 내돈내산", max_results=10)
+        recent_blogs = get_naver_blog_trends("편의점 신상 솔직후기 OR 디저트 내돈내산", max_results=5)
         
         print("3. 커뮤니티(X, 인스티즈, 더쿠) 우회 수집 중...")
         community_query = "(site:twitter.com OR site:x.com OR site:instiz.net OR site:theqoo.net) (편의점 존맛 OR 요즘 유행 디저트 OR 품절)"
-        recent_community = get_community_trends(community_query, max_results=10)
+        recent_community = get_community_trends(community_query, max_results=5)
 
         print(f"   → 추가 데이터 수집 완료 (블로그: {len(recent_blogs)}개, 커뮤니티: {len(recent_community)}개)")
 
