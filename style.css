@@ -54,12 +54,17 @@ header {
 }
 
 .pixel-food-img {
-    width: 100%;
-    min-width: 1200px;
-    height: auto;
-    object-fit: cover;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    margin-top: 1.5rem;
+    margin-bottom: 3rem;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
 }
 
 /* ✨ 신상 태그 디자인 수정: 아기자기한 피치핑크 택 */
