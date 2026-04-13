@@ -158,14 +158,15 @@ header p#summary-text {
     flex: 1;
 }
 
+/* ✅ 수정 */
 .trend-header {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     margin-bottom: 1rem;
-    /* 카드가 좁아져도 뱃지가 아래로 예쁘게 내려가도록 수정 */
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;  /* ✅ */
+    gap: 6px;
+    overflow: visible;  /* ✅ 잘리지 않게 */
 }
 
 /* 2. 감성/신상 배지: 글자 안 보이는 문제 해결 및 아기자기하게 변경 */
