@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 네이버 검색량 뱃지 추가
             let naverBadge = '';
             if (trend.naver_trend) {
-                const arrow = trend.naver_trend.is_rising ? '▲ 네이버 검색 상승 중' : '▽ 네이버 검색 감소세';
+                const arrow = trend.naver_trend.is_rising ? '▲ 네이버 검색 상승' : '▽ 네이버 검색 감소';
                 const color = trend.naver_trend.is_rising ? '#B3E2A7' : '#FFD6D6';
                 naverBadge = `<span class="sentiment" style="background:${color};">${arrow}</span>`;
             }
