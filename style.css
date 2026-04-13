@@ -79,7 +79,7 @@ header {
 h1.main-title {
     font-family: 'Galmuri9', sans-serif;
     font-size: 3.8rem;
-    font-weight: 650;
+    font-weight: 800;
     color: var(--text-main);
     margin-bottom: 1rem;
     text-shadow: 3px 3px 0px rgba(255, 255, 255, 0.8), 5px 5px 0px var(--accent);
@@ -163,8 +163,9 @@ header p#summary-text {
     justify-content: flex-start;
     align-items: center;
     margin-bottom: 1rem;
-    flex-wrap: wrap;   /* ✅ 다시 wrap으로 */
-    gap: 6px;
+    /* 카드가 좁아져도 뱃지가 아래로 예쁘게 내려가도록 수정 */
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 /* 2. 감성/신상 배지: 글자 안 보이는 문제 해결 및 아기자기하게 변경 */
@@ -172,7 +173,7 @@ header p#summary-text {
     padding: 0.3rem 0.6rem;
     border-radius: 6px; /* 더 둥글게 */
     font-family: 'Galmuri9', sans-serif;
-    font-size: 0.6rem;
+    font-size: 0.8rem;
     font-weight: bold;
     color: #1A1A1A; /* 어두운 글자색으로 가독성 확보 */
     letter-spacing: 0.5px;
@@ -262,8 +263,60 @@ header p#summary-text {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* ✅ 모바일 화면에서 '오늘의 트렌드' 폰트 크기만 딱 줄이는 코드 */
 @media (max-width: 768px) {
     h1.main-title {
         font-size: 2.5rem; 
+    }
+}
+
+/* 🔥 하단 불꽃 버튼 및 파티클 애니메이션 스타일 */
+.fire-btn-container {
+    text-align: center;
+    margin: 4rem 0;
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.fire-btn {
+    background: #FFF;
+    border: 2px solid var(--border-dark);
+    padding: 1rem 2rem;
+    border-radius: 30px;
+    font-family: 'Pretendard', sans-serif;
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    cursor: pointer;
+    box-shadow: 4px 4px 0px var(--border-dark);
+    transition: transform 0.1s, box-shadow 0.1s;
+    position: relative;
+    z-index: 10;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fire-btn:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0px var(--border-dark);
+}
+
+.fire-particle {
+    position: absolute;
+    font-size: 1.5rem;
+    pointer-events: none;
+    z-index: 5;
+    animation: floatUp 0.8s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(var(--tx), -80px) scale(1.5);
     }
 }
