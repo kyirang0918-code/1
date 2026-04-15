@@ -17,7 +17,7 @@ GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "").strip()
 
 # 시간 설정
 time_limit = datetime.now(timezone.utc) - timedelta(days=5)
-three_days_ago = time_limit.strftime('%Y-%m-%dT%H:%M:%SZ')
+fifth_days_ago = time_limit.strftime('%Y-%m-%dT%H:%M:%SZ')
 today_str = datetime.now().strftime('%Y-%m-%d')
 one_month_ago_str = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
 
