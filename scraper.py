@@ -15,12 +15,15 @@ NAVER_CLIENT_SECRET = os.environ.get("NAVER_CLIENT_SECRET", "").strip()
 GOOGLE_CX = os.environ.get("GOOGLE_CX", "").strip()
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "").strip()
 
-# 시간 설정 (5일로 유지)
+# 시간 설정 (한국 시간 KST 기준 확정)
+KST = timezone(timedelta(hours=9))
+now_kst = datetime.now(KST)
+
 time_limit = datetime.now(timezone.utc) - timedelta(days=5)
 five_days_ago = time_limit.strftime('%Y-%m-%dT%H:%M:%SZ')
-today_str = datetime.now().strftime('%Y-%m-%d')
-one_month_ago_str = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
-five_days_ago_date = (datetime.now() - timedelta(days=5)).strftime('%Y%m%d')
+today_str = now_kst.strftime('%Y-%m-%d') # 한국 시간으로 오늘 날짜
+one_month_ago_str = (now_kst - timedelta(days=30)).strftime('%Y-%m-%d')
+five_days_ago_date = (now_kst - timedelta(days=5)).strftime('%Y%m%d')
 
 
 def get_latest_youtube_trends(keywords, max_results=5):
