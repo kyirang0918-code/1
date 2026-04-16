@@ -315,6 +315,10 @@ if __name__ == "__main__":
         ai_json_str = summarize_with_ai(recent_videos, recent_blogs, recent_community)
         
         trend_data = json.loads(ai_json_str)
+        
+        # 🔥 AI가 엉뚱한 날짜를 뱉어도 무시하고, 파이썬이 정확한 한국 날짜로 강제 덮어쓰기!
+        trend_data["updated_at"] = today_str
+        
         print(f"   → 트렌드 {len(trend_data.get('trends', []))}개 추출 완료.")
 
         print("5. 교차검증 + 네이버 데이터랩 보강 중...")
